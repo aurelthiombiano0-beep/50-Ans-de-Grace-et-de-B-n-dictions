@@ -1,0 +1,6 @@
+{
+  "name": "50 ans de Grâce - African Chic",
+  "description": "Invitation d'anniversaire premium et luxueuse pour célébrer 50 ans de grâce et de bénédictions à Ouagadougou, au style Africain Chic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

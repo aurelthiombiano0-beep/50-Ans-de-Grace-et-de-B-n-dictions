@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Alex+Brush&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-script: "Alex Brush", cursive;
+  --font-sans: "Inter", sans-serif;
+  --color-gold-light: #F3E5AB;
+  --color-gold-matte: #D4AF37;
+  --color-gold-deep: #AA7C11;
+  --color-dark-deep: #0D0D0D;
+  --color-dark-choc: #1F140E;
+}
+
+/* Custom golden gradient and glows */
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #FFF9E6 0%, #D4AF37 50%, #8C6A0D 100%);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFF3D1 0%, #D4AF37 40%, #AA7C11 75%, #F3E5AB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-gold-gradient {
+  border-image: linear-gradient(135deg, #FFF3D1, #D4AF37, #8C6A0D) 1;
+}
+
+/* Elegant glowing scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 3px;
+}
+
+/* Gold sparkle animation */
+@keyframes gold-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px #D4AF37);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px #D4AF37);
+  }
+}
+
+.gold-sparkle {
+  animation: gold-pulse 6s infinite ease-in-out;
+}
+
+/* Soft glassmorphism */
+.glass-panel {
+  background: rgba(13, 13, 13, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(20, 20, 20, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.08);
+}
+
+/* Custom cursor hide if desktop has cursor active */
+@media (pointer: fine) {
+  .custom-cursor-container {
+    pointer-events: none;
+    z-index: 9999;
+  }
+}
+
+/* Golden text stroke for display numbers */
+.text-stroke-gold {
+  -webkit-text-stroke: 1px rgba(212, 175, 55, 0.4);
+  color: transparent;
+}
+
+/* Smooth page transition loader scale */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-gold {
+  background: linear-gradient(90deg, #131313 25%, #2a2010 50%, #131313 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
