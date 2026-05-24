@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { UserCheck, Phone, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Check, X, ShieldAlert, Image as ImageIcon, Upload, RotateCcw, Youtube } from "lucide-react";
 import { RSVPResponse } from "../types";
 import { pushToServer } from "../lib/api";
+import CelebrationConfetti from "./CelebrationConfetti";
 
 // Table starts completely empty to ensure no fake/simulated guest examples are present
 const SEED_GUESTS: RSVPResponse[] = [];
@@ -305,13 +306,15 @@ export default function RSVPSection() {
         <div className="max-w-2xl mx-auto">
           <AnimatePresence mode="wait">
             {success ? (
-              <motion.div
-                key="success-card"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                className="glass-panel border-2 border-[#D4AF37]/30 rounded-2xl p-8 md:p-12 text-center"
-              >
+              <>
+                <CelebrationConfetti />
+                <motion.div
+                  key="success-card"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  className="glass-panel border-2 border-[#D4AF37]/30 rounded-2xl p-8 md:p-12 text-center"
+                >
                 <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#D4AF37]/40">
                   <Check className="w-8 h-8 text-[#D4AF37]" />
                 </div>
@@ -351,6 +354,7 @@ export default function RSVPSection() {
                   </button>
                 </div>
               </motion.div>
+             </>
             ) : (
               <motion.form
                 key="rsvp-form"

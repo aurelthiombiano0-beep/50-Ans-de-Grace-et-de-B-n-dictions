@@ -22,7 +22,8 @@ export async function syncFromServer() {
     let rsvpsChanged = false;
 
     // Custom Photo 1
-    const localPhoto1 = localStorage.getItem("custom_photo_1");
+    const rawPhoto1 = localStorage.getItem("custom_photo_1");
+    const localPhoto1 = (rawPhoto1 === "null" || rawPhoto1 === "undefined") ? null : rawPhoto1;
     if (localPhoto1 && !data.custom_photo_1) {
       await pushToServer("custom_photo_1", localPhoto1);
       data.custom_photo_1 = localPhoto1;
@@ -36,7 +37,8 @@ export async function syncFromServer() {
     }
 
     // Custom Photo 2
-    const localPhoto2 = localStorage.getItem("custom_photo_2");
+    const rawPhoto2 = localStorage.getItem("custom_photo_2");
+    const localPhoto2 = (rawPhoto2 === "null" || rawPhoto2 === "undefined") ? null : rawPhoto2;
     if (localPhoto2 && !data.custom_photo_2) {
       await pushToServer("custom_photo_2", localPhoto2);
       data.custom_photo_2 = localPhoto2;

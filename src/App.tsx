@@ -19,7 +19,7 @@ import AudioPlayer from "./components/AudioPlayer";
 import { syncFromServer } from "./lib/api";
 
 // Smart Image component with multiple source fallback to support user uploaded images cleanly
-function SmartImage({ src, alt, className }: { src: string[]; alt: string; className?: string }) {
+function SmartImage({ src, alt, className }: { src: string[]; alt: string; className?: string; key?: string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleError = () => {
@@ -54,8 +54,10 @@ export default function App() {
 
   useEffect(() => {
     const handleUpdate = () => {
-      setPhoto1(localStorage.getItem("custom_photo_1"));
-      setPhoto2(localStorage.getItem("custom_photo_2"));
+      const p1 = localStorage.getItem("custom_photo_1");
+      const p2 = localStorage.getItem("custom_photo_2");
+      setPhoto1(p1 === "null" || p1 === "undefined" ? null : p1);
+      setPhoto2(p2 === "null" || p2 === "undefined" ? null : p2);
     };
     handleUpdate();
 
@@ -64,9 +66,17 @@ export default function App() {
       handleUpdate();
     });
 
+    // Simple background sync polling to keep all visitors/clients updated automatically
+    const intervalId = setInterval(() => {
+      syncFromServer().then(() => {
+        handleUpdate();
+      });
+    }, 6000);
+
     window.addEventListener("storage", handleUpdate);
     window.addEventListener("custom-photo-update", handleUpdate);
     return () => {
+      clearInterval(intervalId);
       window.removeEventListener("storage", handleUpdate);
       window.removeEventListener("custom-photo-update", handleUpdate);
     };
@@ -235,6 +245,7 @@ export default function App() {
                   
                   <div className="absolute inset-0 bg-gradient-to-b from-[#4A2C1A]/20 to-[#0D0D0D] flex items-center justify-center overflow-hidden rounded-xl">
                     <SmartImage
+                      key={photo1 || "default_portrait_1"}
                       src={photo1 ? [photo1, portraitBlackGold, portraitBlueDenim, celebratedPortrait] : [
                         portraitBlackGold,
                         portraitBlueDenim,
@@ -334,6 +345,7 @@ export default function App() {
                   {/* Portrait photo of Alimata (Blue Denim Shirt) */}
                   <div className="relative w-full h-full min-h-[260px] lg:min-h-0 flex-1 rounded-lg overflow-hidden border border-[#D4AF37]/15">
                     <SmartImage
+                      key={photo2 || "default_portrait_2"}
                       src={photo2 ? [photo2, portraitBlueDenim, portraitBlackGold, celebratedPortrait] : [
                         portraitBlueDenim,
                         portraitBlackGold,
