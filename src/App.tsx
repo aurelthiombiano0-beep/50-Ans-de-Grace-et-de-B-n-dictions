@@ -16,6 +16,7 @@ import Countdown from "./components/Countdown";
 import DressCode from "./components/DressCode";
 import RSVPSection from "./components/RSVPSection";
 import AudioPlayer from "./components/AudioPlayer";
+import { syncFromServer } from "./lib/api";
 
 // Smart Image component with multiple source fallback to support user uploaded images cleanly
 function SmartImage({ src, alt, className }: { src: string[]; alt: string; className?: string }) {
@@ -57,6 +58,12 @@ export default function App() {
       setPhoto2(localStorage.getItem("custom_photo_2"));
     };
     handleUpdate();
+
+    // Fetch the unified global database to update static resources across all guest clients
+    syncFromServer().then(() => {
+      handleUpdate();
+    });
+
     window.addEventListener("storage", handleUpdate);
     window.addEventListener("custom-photo-update", handleUpdate);
     return () => {

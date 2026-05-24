@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserCheck, Phone, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Check, X, ShieldAlert, Image as ImageIcon, Upload, RotateCcw, Youtube } from "lucide-react";
 import { RSVPResponse } from "../types";
+import { pushToServer } from "../lib/api";
 
 // Table starts completely empty to ensure no fake/simulated guest examples are present
 const SEED_GUESTS: RSVPResponse[] = [];
@@ -37,29 +38,25 @@ export default function RSVPSection() {
   const [authError, setAuthError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    // Sync with local storage and filter out any ancient seed/mock guest samples
+  // Function to load all local and synchronized states
+  const syncLocalStates = () => {
     const saved = localStorage.getItem("ouaga_50_rsvps");
     let initialRsvps: RSVPResponse[] = [];
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Exclude any fallback seeds with legacy ids: "g-1", "g-2", etc.
           initialRsvps = parsed.filter((g: any) => g && g.id && !g.id.startsWith("g-"));
         }
       } catch (e) {
         initialRsvps = [];
       }
     }
-    localStorage.setItem("ouaga_50_rsvps", JSON.stringify(initialRsvps));
     setRsvps(initialRsvps);
 
-    // Load active custom photos
     setLocalPhoto1(localStorage.getItem("custom_photo_1"));
     setLocalPhoto2(localStorage.getItem("custom_photo_2"));
 
-    // Sync YouTube playlist, seeding default tracks if empty or reset
     const SEED_TRACKS = [
       { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
       { id: "ukLoF8u8C0E", name: "Hugh Masekela - Grazing In The Grass", genre: "Legendary South-African Brass" },
@@ -77,8 +74,24 @@ export default function RSVPSection() {
         initialTracks = SEED_TRACKS;
       }
     }
-    localStorage.setItem("custom_youtube_tracks", JSON.stringify(initialTracks));
     setYoutubeTracks(initialTracks);
+  };
+
+  useEffect(() => {
+    syncLocalStates();
+
+    // Event listeners to coordinate synchronous reactivity when background thread updates items
+    window.addEventListener("storage", syncLocalStates);
+    window.addEventListener("custom-photo-update", syncLocalStates);
+    window.addEventListener("ouaga-rsvp-update", syncLocalStates);
+    window.addEventListener("custom-youtube-update", syncLocalStates);
+
+    return () => {
+      window.removeEventListener("storage", syncLocalStates);
+      window.removeEventListener("custom-photo-update", syncLocalStates);
+      window.removeEventListener("ouaga-rsvp-update", syncLocalStates);
+      window.removeEventListener("custom-youtube-update", syncLocalStates);
+    };
   }, []);
 
   const extractYoutubeId = (url: string) => {
@@ -105,6 +118,7 @@ export default function RSVPSection() {
     const updated = [...youtubeTracks, newTrack];
     setYoutubeTracks(updated);
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(updated));
+    pushToServer("custom_youtube_tracks", updated); // Persist directly on server
     window.dispatchEvent(new Event("custom-youtube-update"));
 
     setNewYoutubeUrl("");
@@ -116,6 +130,7 @@ export default function RSVPSection() {
     const updated = youtubeTracks.filter(t => t.id !== idToDelete);
     setYoutubeTracks(updated);
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(updated));
+    pushToServer("custom_youtube_tracks", updated); // Sync deletion with global DB
     window.dispatchEvent(new Event("custom-youtube-update"));
   };
 
@@ -127,6 +142,7 @@ export default function RSVPSection() {
     ];
     setYoutubeTracks(SEED_TRACKS);
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(SEED_TRACKS));
+    pushToServer("custom_youtube_tracks", SEED_TRACKS); // Push back original values
     window.dispatchEvent(new Event("custom-youtube-update"));
   };
 
@@ -165,6 +181,7 @@ export default function RSVPSection() {
     const updated = [newRSVP, ...rsvps];
     localStorage.setItem("ouaga_50_rsvps", JSON.stringify(updated));
     setRsvps(updated);
+    pushToServer("ouaga_50_rsvps", updated); // Push state to unified global DB
 
     setSubmitting(false);
     setSuccess(true);
@@ -196,18 +213,30 @@ export default function RSVPSection() {
     reader.onloadend = () => {
       const base64String = reader.result as string;
       localStorage.setItem(photoKey, base64String);
+      if (photoKey === "custom_photo_1") {
+        setLocalPhoto1(base64String);
+        pushToServer("custom_photo_1", base64String);
+      }
+      if (photoKey === "custom_photo_2") {
+        setLocalPhoto2(base64String);
+        pushToServer("custom_photo_2", base64String);
+      }
       window.dispatchEvent(new Event("custom-photo-update"));
-      if (photoKey === "custom_photo_1") setLocalPhoto1(base64String);
-      if (photoKey === "custom_photo_2") setLocalPhoto2(base64String);
     };
     reader.readAsDataURL(file);
   };
 
   const handleResetPhoto = (photoKey: string) => {
     localStorage.removeItem(photoKey);
+    if (photoKey === "custom_photo_1") {
+      setLocalPhoto1(null);
+      pushToServer("custom_photo_1", null);
+    }
+    if (photoKey === "custom_photo_2") {
+      setLocalPhoto2(null);
+      pushToServer("custom_photo_2", null);
+    }
     window.dispatchEvent(new Event("custom-photo-update"));
-    if (photoKey === "custom_photo_1") setLocalPhoto1(null);
-    if (photoKey === "custom_photo_2") setLocalPhoto2(null);
   };
 
   const handleDownloadCSV = () => {
@@ -241,6 +270,7 @@ export default function RSVPSection() {
     const updated = rsvps.map((r) => ({ ...r, read: true }));
     setRsvps(updated);
     localStorage.setItem("ouaga_50_rsvps", JSON.stringify(updated));
+    pushToServer("ouaga_50_rsvps", updated);
   };
 
   const filteredRsvps = rsvps.filter((r) =>
