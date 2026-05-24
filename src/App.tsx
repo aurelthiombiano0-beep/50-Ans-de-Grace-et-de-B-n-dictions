@@ -16,7 +16,7 @@ import Countdown from "./components/Countdown";
 import DressCode from "./components/DressCode";
 import RSVPSection from "./components/RSVPSection";
 import AudioPlayer from "./components/AudioPlayer";
-import { syncFromServer } from "./lib/api";
+import { syncFromServer, currentPhoto1, currentPhoto2 } from "./lib/api";
 
 // Smart Image component with multiple source fallback to support user uploaded images cleanly
 function SmartImage({ src, alt, className }: { src: string[]; alt: string; className?: string; key?: string }) {
@@ -54,8 +54,8 @@ export default function App() {
 
   useEffect(() => {
     const handleUpdate = () => {
-      const p1 = localStorage.getItem("custom_photo_1");
-      const p2 = localStorage.getItem("custom_photo_2");
+      const p1 = currentPhoto1 || localStorage.getItem("custom_photo_1");
+      const p2 = currentPhoto2 || localStorage.getItem("custom_photo_2");
       setPhoto1(p1 === "null" || p1 === "undefined" ? null : p1);
       setPhoto2(p2 === "null" || p2 === "undefined" ? null : p2);
     };

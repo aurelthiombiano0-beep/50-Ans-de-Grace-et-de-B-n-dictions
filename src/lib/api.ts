@@ -9,6 +9,14 @@ export interface GlobalData {
   custom_youtube_tracks: any[];
 }
 
+export let currentPhoto1: string | null = null;
+export let currentPhoto2: string | null = null;
+
+export function updateMemoryPhotos(p1?: string | null, p2?: string | null) {
+  if (p1 !== undefined) currentPhoto1 = p1;
+  if (p2 !== undefined) currentPhoto2 = p2;
+}
+
 // Fetch current snapshot from server, sync to localStorage, and dispatch update events
 export async function syncFromServer() {
   try {
@@ -24,12 +32,23 @@ export async function syncFromServer() {
     // Custom Photo 1
     const rawPhoto1 = localStorage.getItem("custom_photo_1");
     const localPhoto1 = (rawPhoto1 === "null" || rawPhoto1 === "undefined") ? null : rawPhoto1;
-    if (localPhoto1 && !data.custom_photo_1) {
-      await pushToServer("custom_photo_1", localPhoto1);
-      data.custom_photo_1 = localPhoto1;
-    } else if (localPhoto1 !== data.custom_photo_1) {
+    
+    // Initialize memory cache from localStorage if empty
+    if (!currentPhoto1 && localPhoto1) {
+      currentPhoto1 = localPhoto1;
+    }
+
+    if (currentPhoto1 && !data.custom_photo_1) {
+      await pushToServer("custom_photo_1", currentPhoto1);
+      data.custom_photo_1 = currentPhoto1;
+    } else if (currentPhoto1 !== data.custom_photo_1) {
+      currentPhoto1 = data.custom_photo_1;
       if (data.custom_photo_1) {
-        localStorage.setItem("custom_photo_1", data.custom_photo_1);
+        try {
+          localStorage.setItem("custom_photo_1", data.custom_photo_1);
+        } catch (e) {
+          console.warn("Failed to save custom_photo_1 to local storage (quota limit, using memory cache instead):", e);
+        }
       } else {
         localStorage.removeItem("custom_photo_1");
       }
@@ -39,12 +58,23 @@ export async function syncFromServer() {
     // Custom Photo 2
     const rawPhoto2 = localStorage.getItem("custom_photo_2");
     const localPhoto2 = (rawPhoto2 === "null" || rawPhoto2 === "undefined") ? null : rawPhoto2;
-    if (localPhoto2 && !data.custom_photo_2) {
-      await pushToServer("custom_photo_2", localPhoto2);
-      data.custom_photo_2 = localPhoto2;
-    } else if (localPhoto2 !== data.custom_photo_2) {
+    
+    // Initialize memory cache from localStorage if empty
+    if (!currentPhoto2 && localPhoto2) {
+      currentPhoto2 = localPhoto2;
+    }
+
+    if (currentPhoto2 && !data.custom_photo_2) {
+      await pushToServer("custom_photo_2", currentPhoto2);
+      data.custom_photo_2 = currentPhoto2;
+    } else if (currentPhoto2 !== data.custom_photo_2) {
+      currentPhoto2 = data.custom_photo_2;
       if (data.custom_photo_2) {
-        localStorage.setItem("custom_photo_2", data.custom_photo_2);
+        try {
+          localStorage.setItem("custom_photo_2", data.custom_photo_2);
+        } catch (e) {
+          console.warn("Failed to save custom_photo_2 to local storage (quota limit, using memory cache instead):", e);
+        }
       } else {
         localStorage.removeItem("custom_photo_2");
       }

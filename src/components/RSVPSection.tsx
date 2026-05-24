@@ -2,8 +2,72 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserCheck, Phone, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Check, X, ShieldAlert, Image as ImageIcon, Upload, RotateCcw, Youtube } from "lucide-react";
 import { RSVPResponse } from "../types";
-import { pushToServer } from "../lib/api";
+import { pushToServer, currentPhoto1, currentPhoto2, updateMemoryPhotos } from "../lib/api";
 import CelebrationConfetti from "./CelebrationConfetti";
+
+// Client-side image compression helper to avoid QuotaExceededError in localStorage (which has a 5MB limit per origin)
+const compressImage = (file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.75): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !window.HTMLCanvasElement) {
+      const fallbackReader = new FileReader();
+      fallbackReader.onloadend = () => resolve(fallbackReader.result as string);
+      fallbackReader.onerror = (err) => reject(err);
+      fallbackReader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          // Fill high-fidelity white background for transparency conversion layers
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+          resolve(compressedBase64);
+        } catch (error) {
+          console.warn("Canvas compression failed, falling back to original base64:", error);
+          resolve(event.target?.result as string);
+        }
+      };
+      img.onerror = (err) => {
+        console.warn("Image load failed for compression, falling back to original file:", err);
+        resolve(event.target?.result as string || "");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
 
 // Table starts completely empty to ensure no fake/simulated guest examples are present
 const SEED_GUESTS: RSVPResponse[] = [];
@@ -55,8 +119,10 @@ export default function RSVPSection() {
     }
     setRsvps(initialRsvps);
 
-    setLocalPhoto1(localStorage.getItem("custom_photo_1"));
-    setLocalPhoto2(localStorage.getItem("custom_photo_2"));
+    const p1 = currentPhoto1 || localStorage.getItem("custom_photo_1");
+    const p2 = currentPhoto2 || localStorage.getItem("custom_photo_2");
+    setLocalPhoto1(p1 === "null" || p1 === "undefined" ? null : p1);
+    setLocalPhoto2(p2 === "null" || p2 === "undefined" ? null : p2);
 
     const SEED_TRACKS = [
       { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
@@ -205,36 +271,46 @@ export default function RSVPSection() {
     }
   };
 
-  // Image Upload logic inside Organizer VIP Space
+  // Image Upload logic inside Organizer VIP Space with client-side canvas-compression
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, photoKey: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      localStorage.setItem(photoKey, base64String);
-      if (photoKey === "custom_photo_1") {
-        setLocalPhoto1(base64String);
-        pushToServer("custom_photo_1", base64String);
-      }
-      if (photoKey === "custom_photo_2") {
-        setLocalPhoto2(base64String);
-        pushToServer("custom_photo_2", base64String);
-      }
-      window.dispatchEvent(new Event("custom-photo-update"));
-    };
-    reader.readAsDataURL(file);
+    compressImage(file, 1000, 1000, 0.75)
+      .then((compressedBase64) => {
+        try {
+          localStorage.setItem(photoKey, compressedBase64);
+        } catch (err) {
+          console.error("Failed to write compressed image to localStorage:", err);
+        }
+
+        if (photoKey === "custom_photo_1") {
+          setLocalPhoto1(compressedBase64);
+          updateMemoryPhotos(compressedBase64, undefined);
+          pushToServer("custom_photo_1", compressedBase64);
+        }
+        if (photoKey === "custom_photo_2") {
+          setLocalPhoto2(compressedBase64);
+          updateMemoryPhotos(undefined, compressedBase64);
+          pushToServer("custom_photo_2", compressedBase64);
+        }
+        window.dispatchEvent(new Event("custom-photo-update"));
+      })
+      .catch((err) => {
+        console.error("Failed to compress and upload photo:", err);
+      });
   };
 
   const handleResetPhoto = (photoKey: string) => {
     localStorage.removeItem(photoKey);
     if (photoKey === "custom_photo_1") {
       setLocalPhoto1(null);
+      updateMemoryPhotos(null, undefined);
       pushToServer("custom_photo_1", null);
     }
     if (photoKey === "custom_photo_2") {
       setLocalPhoto2(null);
+      updateMemoryPhotos(undefined, null);
       pushToServer("custom_photo_2", null);
     }
     window.dispatchEvent(new Event("custom-photo-update"));
