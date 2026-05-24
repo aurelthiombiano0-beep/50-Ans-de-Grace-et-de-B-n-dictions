@@ -21,7 +21,12 @@ export async function syncFromServer() {
     let tracksChanged = false;
     let rsvpsChanged = false;
 
-    if (localStorage.getItem("custom_photo_1") !== data.custom_photo_1) {
+    // Custom Photo 1
+    const localPhoto1 = localStorage.getItem("custom_photo_1");
+    if (localPhoto1 && !data.custom_photo_1) {
+      await pushToServer("custom_photo_1", localPhoto1);
+      data.custom_photo_1 = localPhoto1;
+    } else if (localPhoto1 !== data.custom_photo_1) {
       if (data.custom_photo_1) {
         localStorage.setItem("custom_photo_1", data.custom_photo_1);
       } else {
@@ -30,7 +35,12 @@ export async function syncFromServer() {
       photosChanged = true;
     }
 
-    if (localStorage.getItem("custom_photo_2") !== data.custom_photo_2) {
+    // Custom Photo 2
+    const localPhoto2 = localStorage.getItem("custom_photo_2");
+    if (localPhoto2 && !data.custom_photo_2) {
+      await pushToServer("custom_photo_2", localPhoto2);
+      data.custom_photo_2 = localPhoto2;
+    } else if (localPhoto2 !== data.custom_photo_2) {
       if (data.custom_photo_2) {
         localStorage.setItem("custom_photo_2", data.custom_photo_2);
       } else {
