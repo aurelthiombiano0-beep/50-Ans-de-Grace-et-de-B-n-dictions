@@ -3,45 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { UserCheck, Phone, CheckCircle2, AlertCircle, FileSpreadsheet, Search, Check, X, ShieldAlert, Image as ImageIcon, Upload, RotateCcw, Youtube } from "lucide-react";
 import { RSVPResponse } from "../types";
 
-// Seed guests for initial state to showcase a fully functional invitation list without complex fields
-const SEED_GUESTS: RSVPResponse[] = [
-  {
-    id: "g-1",
-    name: "Mme Fatim Ouédraogo",
-    phone: "+226 70 25 14 36",
-    numberOfGuests: 1,
-    attending: true,
-    notes: "Félicitations pour tes 50 ans de grâce, chère amie !",
-    submittedAt: "2026-05-23T14:30:00Z",
-  },
-  {
-    id: "g-2",
-    name: "M. Habibata Diallo & Épouse",
-    phone: "+226 76 11 02 44",
-    numberOfGuests: 1,
-    attending: true,
-    notes: "Avec toute mon amitié et mes bénédictions.",
-    submittedAt: "2026-05-23T16:15:00Z",
-  },
-  {
-    id: "g-3",
-    name: "Dr. Jean-Pierre Compaoré",
-    phone: "+226 65 92 88 11",
-    numberOfGuests: 0,
-    attending: false,
-    notes: "En déplacement, mes pensées seront avec vous.",
-    submittedAt: "2026-05-24T09:40:00Z",
-  },
-  {
-    id: "g-4",
-    name: "Famille Yaméogo Koudougou",
-    phone: "+226 70 82 45 61",
-    numberOfGuests: 1,
-    attending: true,
-    notes: "Nous serons honorés de célébrer ce jubilé d’or.",
-    submittedAt: "2026-05-24T18:22:00Z",
-  },
-];
+// Table starts completely empty to ensure no fake/simulated guest examples are present
+const SEED_GUESTS: RSVPResponse[] = [];
 
 export default function RSVPSection() {
   const [rsvps, setRsvps] = useState<RSVPResponse[]>([]);
@@ -75,35 +38,44 @@ export default function RSVPSection() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Sync with local storage, insert seeds if empty
+    // Sync with local storage and filter out any ancient seed/mock guest samples
     const saved = localStorage.getItem("ouaga_50_rsvps");
+    let initialRsvps: RSVPResponse[] = [];
     if (saved) {
-      setRsvps(JSON.parse(saved));
-    } else {
-      localStorage.setItem("ouaga_50_rsvps", JSON.stringify(SEED_GUESTS));
-      setRsvps(SEED_GUESTS);
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Exclude any fallback seeds with legacy ids: "g-1", "g-2", etc.
+          initialRsvps = parsed.filter((g: any) => g && g.id && !g.id.startsWith("g-"));
+        }
+      } catch (e) {
+        initialRsvps = [];
+      }
     }
+    localStorage.setItem("ouaga_50_rsvps", JSON.stringify(initialRsvps));
+    setRsvps(initialRsvps);
 
     // Load active custom photos
     setLocalPhoto1(localStorage.getItem("custom_photo_1"));
     setLocalPhoto2(localStorage.getItem("custom_photo_2"));
 
-    // Sync YouTube playlist from storage, or load default seeds if empty
-    const SEED_TRACKS = [
-      { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
-      { id: "ukLoF8u8C0E", name: "Hugh Masekela - Grazing In The Grass", genre: "Legendary South-African Brass" },
-      { id: "B8pA6-e8pBM", name: "Fela Kuti - Water No Get Enemy", genre: "Afrobeat Jazz Masterpiece" }
-    ];
+    // Sync YouTube playlist, cleaning out any legacy mock soundtracks
     const storedTracks = localStorage.getItem("custom_youtube_tracks");
+    let initialTracks: { id: string; name: string; genre: string }[] = [];
     if (storedTracks) {
       try {
-        setYoutubeTracks(JSON.parse(storedTracks));
+        const parsed = JSON.parse(storedTracks);
+        if (Array.isArray(parsed)) {
+          // Exclude legacy seed youtube videos
+          const legacyIds = ["y4PtN9L-78g", "ukLoF8u8C0E", "B8pA6-e8pBM"];
+          initialTracks = parsed.filter((t: any) => t && t.id && !legacyIds.includes(t.id));
+        }
       } catch (e) {
-        setYoutubeTracks(SEED_TRACKS);
+        initialTracks = [];
       }
-    } else {
-      setYoutubeTracks(SEED_TRACKS);
     }
+    localStorage.setItem("custom_youtube_tracks", JSON.stringify(initialTracks));
+    setYoutubeTracks(initialTracks);
   }, []);
 
   const extractYoutubeId = (url: string) => {
@@ -145,11 +117,7 @@ export default function RSVPSection() {
   };
 
   const handleResetYoutubeTracks = () => {
-    const SEED_TRACKS = [
-      { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
-      { id: "ukLoF8u8C0E", name: "Hugh Masekela - Grazing In The Grass", genre: "Legendary South-African Brass" },
-      { id: "B8pA6-e8pBM", name: "Fela Kuti - Water No Get Enemy", genre: "Afrobeat Jazz Masterpiece" }
-    ];
+    const SEED_TRACKS: { id: string; name: string; genre: string }[] = [];
     setYoutubeTracks(SEED_TRACKS);
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(SEED_TRACKS));
     window.dispatchEvent(new Event("custom-youtube-update"));

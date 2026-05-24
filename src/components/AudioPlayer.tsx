@@ -8,31 +8,16 @@ interface Track {
   genre: string;
 }
 
-const SEED_TRACKS: Track[] = [
-  {
-    id: "y4PtN9L-78g",
-    name: "Manu Dibango - Soul Makossa",
-    genre: "Afro-Jazz Classic",
-  },
-  {
-    id: "ukLoF8u8C0E",
-    name: "Hugh Masekela - Grazing In The Grass",
-    genre: "Legendary South-African Brass",
-  },
-  {
-    id: "B8pA6-e8pBM",
-    name: "Fela Kuti - Water No Get Enemy",
-    genre: "Afrobeat Jazz Masterpiece",
-  }
-];
+const SEED_TRACKS: Track[] = [];
 
 const getStoredTracks = (): Track[] => {
   const stored = localStorage.getItem("custom_youtube_tracks");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        const legacyIds = ["y4PtN9L-78g", "ukLoF8u8C0E", "B8pA6-e8pBM"];
+        return parsed.filter((t: any) => t && t.id && !legacyIds.includes(t.id));
       }
     } catch (e) {
       console.warn("Failed parsing custom_youtube_tracks, falling back to seeds.");

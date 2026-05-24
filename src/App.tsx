@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Calendar, MapPin, Clock, Sparkles, Heart, Quote, ArrowRight, Music, BellRing } from "lucide-react";
 
+// Import images to resolve correctly under Vite's production hashing
+import africanGoldPattern from "./assets/images/african_gold_pattern_1779581748779.png";
+import portraitBlackGold from "./assets/images/portrait_black_gold_1779630997847.png";
+import portraitBlueDenim from "./assets/images/portrait_blue_denim_1779631012523.png";
+import celebratedPortrait from "./assets/images/celebrated_portrait_1779581730348.png";
+
 // Components
 import Loader from "./components/Loader";
 import GoldParticles from "./components/GoldParticles";
@@ -86,7 +92,7 @@ export default function App() {
           <div
             className="absolute inset-0 pointer-events-none opacity-15 mix-blend-color-dodge z-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: "url('/src/assets/images/african_gold_pattern_1779581748779.png')",
+              backgroundImage: `url('${africanGoldPattern}')`,
               backgroundAttachment: "fixed",
             }}
           />
@@ -222,10 +228,10 @@ export default function App() {
                   
                   <div className="absolute inset-0 bg-gradient-to-b from-[#4A2C1A]/20 to-[#0D0D0D] flex items-center justify-center overflow-hidden rounded-xl">
                     <SmartImage
-                      src={photo1 ? [photo1, "/src/assets/images/portrait_black_gold_1779630997847.png", "/src/assets/images/portrait_blue_denim_1779631012523.png", "/src/assets/images/celebrated_portrait_1779581730348.png"] : [
-                        "/src/assets/images/portrait_black_gold_1779630997847.png",
-                        "/src/assets/images/portrait_blue_denim_1779631012523.png",
-                        "/src/assets/images/celebrated_portrait_1779581730348.png"
+                      src={photo1 ? [photo1, portraitBlackGold, portraitBlueDenim, celebratedPortrait] : [
+                        portraitBlackGold,
+                        portraitBlueDenim,
+                        celebratedPortrait
                       ]}
                       alt="Invitation de OUEDRAOGO Alimata"
                       className="w-full h-full object-cover rounded-xl group-hover:scale-[1.03] transition-transform duration-700 pointer-events-none"
@@ -321,10 +327,10 @@ export default function App() {
                   {/* Portrait photo of Alimata (Blue Denim Shirt) */}
                   <div className="relative w-full h-full min-h-[260px] lg:min-h-0 flex-1 rounded-lg overflow-hidden border border-[#D4AF37]/15">
                     <SmartImage
-                      src={photo2 ? [photo2, "/src/assets/images/portrait_blue_denim_1779631012523.png", "/src/assets/images/portrait_black_gold_1779630997847.png", "/src/assets/images/celebrated_portrait_1779581730348.png"] : [
-                        "/src/assets/images/portrait_blue_denim_1779631012523.png",
-                        "/src/assets/images/portrait_black_gold_1779630997847.png",
-                        "/src/assets/images/celebrated_portrait_1779581730348.png"
+                      src={photo2 ? [photo2, portraitBlueDenim, portraitBlackGold, celebratedPortrait] : [
+                        portraitBlueDenim,
+                        portraitBlackGold,
+                        celebratedPortrait
                       ]}
                       alt="OUEDRAOGO Alimata"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none"
