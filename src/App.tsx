@@ -7,7 +7,7 @@ import africanGoldPattern from "./assets/images/african_gold_pattern_17795817487
 import portraitBlackGold from "./assets/images/portrait_black_gold_1779630997847.png";
 import portraitBlueDenim from "./assets/images/portrait_blue_denim_1779631012523.png";
 import celebratedPortrait from "./assets/images/celebrated_portrait_1779581730348.png";
-import accueil from "./assets/images/accueil.jpg";
+
 // Components
 import Loader from "./components/Loader";
 import GoldParticles from "./components/GoldParticles";
