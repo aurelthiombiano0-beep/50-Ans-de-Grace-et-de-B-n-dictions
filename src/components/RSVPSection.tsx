@@ -59,19 +59,22 @@ export default function RSVPSection() {
     setLocalPhoto1(localStorage.getItem("custom_photo_1"));
     setLocalPhoto2(localStorage.getItem("custom_photo_2"));
 
-    // Sync YouTube playlist, cleaning out any legacy mock soundtracks
+    // Sync YouTube playlist, seeding default tracks if empty or reset
+    const SEED_TRACKS = [
+      { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
+      { id: "ukLoF8u8C0E", name: "Hugh Masekela - Grazing In The Grass", genre: "Legendary South-African Brass" },
+      { id: "B8pA6-e8pBM", name: "Fela Kuti - Water No Get Enemy", genre: "Afrobeat Jazz Masterpiece" }
+    ];
     const storedTracks = localStorage.getItem("custom_youtube_tracks");
-    let initialTracks: { id: string; name: string; genre: string }[] = [];
+    let initialTracks = SEED_TRACKS;
     if (storedTracks) {
       try {
         const parsed = JSON.parse(storedTracks);
-        if (Array.isArray(parsed)) {
-          // Exclude legacy seed youtube videos
-          const legacyIds = ["y4PtN9L-78g", "ukLoF8u8C0E", "B8pA6-e8pBM"];
-          initialTracks = parsed.filter((t: any) => t && t.id && !legacyIds.includes(t.id));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialTracks = parsed;
         }
       } catch (e) {
-        initialTracks = [];
+        initialTracks = SEED_TRACKS;
       }
     }
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(initialTracks));
@@ -117,7 +120,11 @@ export default function RSVPSection() {
   };
 
   const handleResetYoutubeTracks = () => {
-    const SEED_TRACKS: { id: string; name: string; genre: string }[] = [];
+    const SEED_TRACKS = [
+      { id: "y4PtN9L-78g", name: "Manu Dibango - Soul Makossa", genre: "Afro-Jazz Classic" },
+      { id: "ukLoF8u8C0E", name: "Hugh Masekela - Grazing In The Grass", genre: "Legendary South-African Brass" },
+      { id: "B8pA6-e8pBM", name: "Fela Kuti - Water No Get Enemy", genre: "Afrobeat Jazz Masterpiece" }
+    ];
     setYoutubeTracks(SEED_TRACKS);
     localStorage.setItem("custom_youtube_tracks", JSON.stringify(SEED_TRACKS));
     window.dispatchEvent(new Event("custom-youtube-update"));
@@ -152,6 +159,7 @@ export default function RSVPSection() {
       attending,
       notes: notes.trim() || undefined,
       submittedAt: new Date().toISOString(),
+      read: false,
     };
 
     const updated = [newRSVP, ...rsvps];
@@ -227,6 +235,13 @@ export default function RSVPSection() {
   const totalSubmissions = rsvps.length;
   const totalPresence = rsvps.filter((r) => r.attending).length;
   const totalNotesWithWishes = rsvps.filter((r) => r.notes?.trim()).length;
+  const unreadCount = rsvps.filter((r) => r.read === false || r.read === undefined).length;
+
+  const handleMarkAllAsRead = () => {
+    const updated = rsvps.map((r) => ({ ...r, read: true }));
+    setRsvps(updated);
+    localStorage.setItem("ouaga_50_rsvps", JSON.stringify(updated));
+  };
 
   const filteredRsvps = rsvps.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -441,10 +456,17 @@ export default function RSVPSection() {
               setAdminPin("");
               setAuthError("");
             }}
-            className="inline-flex items-center gap-2 text-xs text-[#F8F5F0]/40 hover:text-[#D4AF37] transition-colors font-mono uppercase tracking-widest"
+            className="inline-flex items-center gap-2 text-xs text-[#F8F5F0]/40 hover:text-[#D4AF37] transition-colors font-mono uppercase tracking-widest relative px-4 py-2 rounded-full border border-neutral-900/40 bg-black/40 hover:bg-black/60 shadow-md group cursor-pointer"
           >
-            <ShieldAlert className="w-4 h-4" />
+            <ShieldAlert className="w-4 h-4 text-neutral-600 group-hover:text-[#D4AF37] transition-colors" />
             Espace Organisateur VIP
+            
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-mono font-bold text-white shadow-lg animate-bounce">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75 animate-ping" />
+                <span className="relative z-10">{unreadCount}</span>
+              </span>
+            )}
           </button>
 
           <AnimatePresence>
@@ -510,7 +532,7 @@ export default function RSVPSection() {
                     </div>
 
                     {/* Stats Tiles */}
-                    <div className="grid grid-cols-3 gap-3 my-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-6">
                       <div className="bg-[#131313] p-4 rounded-lg border border-neutral-800 text-center">
                         <span className="block font-mono text-2xl font-bold text-white">
                           {totalSubmissions}
@@ -533,6 +555,33 @@ export default function RSVPSection() {
                         </span>
                         <span className="text-[10px] text-[#F8F5F0]/40 uppercase tracking-widest font-mono">
                           Mots de Vœux
+                        </span>
+                      </div>
+                      <div className="bg-[#131313] p-4 rounded-lg border border-neutral-800 text-center flex flex-col justify-between items-center relative">
+                        {unreadCount > 0 ? (
+                          <>
+                            <span className="block font-mono text-2xl font-bold text-red-500 animate-pulse">
+                              {unreadCount}
+                            </span>
+                            <button
+                              onClick={handleMarkAllAsRead}
+                              className="text-[9px] text-[#D4AF37] hover:underline uppercase tracking-wide font-semibold mt-1 cursor-pointer"
+                            >
+                              Marquer Lu
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="block font-mono text-2xl font-bold text-green-500">
+                              0
+                            </span>
+                            <span className="text-[9px] text-neutral-500 uppercase tracking-wide mt-1">
+                              À jour
+                            </span>
+                          </>
+                        )}
+                        <span className="text-[10px] text-[#F8F5F0]/40 uppercase tracking-widest font-mono mt-1">
+                          Nouveaux !
                         </span>
                       </div>
                     </div>
@@ -769,26 +818,37 @@ export default function RSVPSection() {
                               </td>
                             </tr>
                           ) : (
-                            filteredRsvps.map((guest) => (
-                              <tr key={guest.id} className="hover:bg-neutral-900/40">
-                                <td className="p-3 font-medium text-white max-w-[150px] truncate">
-                                  {guest.name}
-                                </td>
-                                <td className="p-3">
-                                  {guest.attending ? (
-                                    <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold">
-                                      <Check className="w-2.5 h-2.5" /> OUI
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold">
-                                      <X className="w-2.5 h-2.5" /> NON
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="p-3 font-mono text-[11px] text-[#F8F5F0]/50">{guest.phone}</td>
-                                <td className="p-3 text-neutral-400 max-w-[200px] truncate italic">{guest.notes || "—"}</td>
-                              </tr>
-                            ))
+                            filteredRsvps.map((guest) => {
+                              const isUnread = guest.read === false || guest.read === undefined;
+                              return (
+                                <tr key={guest.id} className={`hover:bg-neutral-900/40 transition-colors ${isUnread ? "bg-red-500/5" : ""}`}>
+                                  <td className="p-3 font-medium text-white max-w-[150px] truncate">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      {isUnread && (
+                                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0 animate-pulse" title="Nouveau RSVP non lu" />
+                                      )}
+                                      <span className="truncate">{guest.name}</span>
+                                      {isUnread && (
+                                        <span className="text-[8px] bg-red-600/20 border border-red-500/30 text-red-400 px-1 rounded uppercase font-mono tracking-wider shrink-0">New</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="p-3">
+                                    {guest.attending ? (
+                                      <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold">
+                                        <Check className="w-2.5 h-2.5" /> OUI
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold">
+                                        <X className="w-2.5 h-2.5" /> NON
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 font-mono text-[11px] text-[#F8F5F0]/50">{guest.phone}</td>
+                                  <td className="p-3 text-neutral-400 max-w-[200px] truncate italic">{guest.notes || "—"}</td>
+                                </tr>
+                              );
+                            })
                           )}
                         </tbody>
                       </table>

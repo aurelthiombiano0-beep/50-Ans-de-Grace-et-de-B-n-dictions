@@ -7,6 +7,7 @@ export interface RSVPResponse {
   notes?: string;
   location?: string;
   submittedAt: string;
+  read?: boolean;
 }
 
 export interface GalleryItem {
